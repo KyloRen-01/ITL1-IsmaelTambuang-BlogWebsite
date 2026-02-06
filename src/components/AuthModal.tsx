@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { supabase } from '@/lib/supabase';
-import { Mail, Lock, Loader2, ArrowRight, User } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/lib/supabase";
+import { createUser } from "@/lib/db";
+import { Mail, Lock, Loader2, ArrowRight, User } from "lucide-react";
 
 interface AuthModalProps {
   open: boolean;
@@ -12,20 +19,23 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }) => {
-  const [mode, setMode] = useState<'login' | 'signup' | 'magic'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<"login" | "signup" | "magic">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    
+    setError("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
     if (error) {
       setError(error.message);
     } else {
@@ -38,15 +48,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }) => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    
-    const { error } = await supabase.auth.signUp({ email, password });
-    
+    setError("");
+
+    const { data, error } = await supabase.auth.signUp({ email, password });
+
     if (error) {
       setError(error.message);
-    } else {
-      setSuccess('Account created! You can now sign in.');
-      setMode('login');
+    } else if (data.user) {
+      // Create user record in public.users table
+      try {
+        await createUser(data.user.id, email);
+      } catch (err) {
+        console.error("Failed to create user profile:", err);
+      }
+      setSuccess("Account created! You can now sign in.");
+      setMode("login");
     }
     setLoading(false);
   };
@@ -54,29 +70,42 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }) => {
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    
+    setError("");
+
     const { error } = await supabase.auth.signInWithOtp({ email });
-    
+
     if (error) {
       setError(error.message);
     } else {
-      setSuccess('Check your email for the magic link!');
+      setSuccess("Check your email for the magic link!");
     }
     setLoading(false);
   };
 
-  const handleSubmit = mode === 'login' ? handleLogin : mode === 'signup' ? handleSignup : handleMagicLink;
+  const handleSubmit =
+    mode === "login"
+      ? handleLogin
+      : mode === "signup"
+        ? handleSignup
+        : handleMagicLink;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-md bg-slate-900 border-slate-700/50">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-white text-center">
-            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Magic Link'}
+            {mode === "login"
+              ? "Welcome Back"
+              : mode === "signup"
+                ? "Create Account"
+                : "Magic Link"}
           </DialogTitle>
           <DialogDescription className="text-slate-400 text-center">
-            {mode === 'login' ? 'Sign in to access the admin dashboard' : mode === 'signup' ? 'Create your admin account' : 'We\'ll send you a login link'}
+            {mode === "login"
+              ? "Sign in to access the admin dashboard"
+              : mode === "signup"
+                ? "Create your admin account"
+                : "We'll send you a login link"}
           </DialogDescription>
         </DialogHeader>
 
@@ -107,9 +136,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }) => {
             </div>
           </div>
 
-          {mode !== 'magic' && (
+          {mode !== "magic" && (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Password</label>
+              <label className="text-sm font-medium text-slate-300">
+                Password
+              </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                 <Input
@@ -132,14 +163,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }) => {
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : mode === 'magic' ? (
+            ) : mode === "magic" ? (
               <Mail className="h-4 w-4 mr-2" />
-            ) : mode === 'signup' ? (
+            ) : mode === "signup" ? (
               <User className="h-4 w-4 mr-2" />
             ) : (
               <ArrowRight className="h-4 w-4 mr-2" />
             )}
-            {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Send Magic Link'}
+            {loading
+              ? "Please wait..."
+              : mode === "login"
+                ? "Sign In"
+                : mode === "signup"
+                  ? "Create Account"
+                  : "Send Magic Link"}
           </Button>
 
           <div className="flex items-center gap-4 my-4">
@@ -149,18 +186,45 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }) => {
           </div>
 
           <div className="flex gap-2">
-            {mode !== 'login' && (
-              <Button type="button" variant="ghost" className="flex-1 text-slate-400 hover:text-white hover:bg-slate-800" onClick={() => { setMode('login'); setError(''); setSuccess(''); }}>
+            {mode !== "login" && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="flex-1 text-slate-400 hover:text-white hover:bg-slate-800"
+                onClick={() => {
+                  setMode("login");
+                  setError("");
+                  setSuccess("");
+                }}
+              >
                 Sign In
               </Button>
             )}
-            {mode !== 'signup' && (
-              <Button type="button" variant="ghost" className="flex-1 text-slate-400 hover:text-white hover:bg-slate-800" onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}>
+            {mode !== "signup" && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="flex-1 text-slate-400 hover:text-white hover:bg-slate-800"
+                onClick={() => {
+                  setMode("signup");
+                  setError("");
+                  setSuccess("");
+                }}
+              >
                 Sign Up
               </Button>
             )}
-            {mode !== 'magic' && (
-              <Button type="button" variant="ghost" className="flex-1 text-slate-400 hover:text-white hover:bg-slate-800" onClick={() => { setMode('magic'); setError(''); setSuccess(''); }}>
+            {mode !== "magic" && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="flex-1 text-slate-400 hover:text-white hover:bg-slate-800"
+                onClick={() => {
+                  setMode("magic");
+                  setError("");
+                  setSuccess("");
+                }}
+              >
                 Magic Link
               </Button>
             )}

@@ -1,25 +1,31 @@
-import React from 'react';
-import { Post } from '@/types/post';
-import { Clock, ArrowRight, Newspaper, BookOpen, Calendar } from 'lucide-react';
+import React from "react";
+import { Post } from "@/types/post";
+import { Clock, ArrowRight, Newspaper, BookOpen, Calendar } from "lucide-react";
 
 interface PostCardProps {
   post: Post;
   onReadMore: (postId: string) => void;
+  p?: boolean;
   featured?: boolean;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onReadMore, featured = false }) => {
+const PostCard: React.FC<PostCardProps> = ({
+  post,
+  onReadMore,
+  featured = false,
+}) => {
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
-  const coverImage = post.images && post.images.length > 0
-    ? post.images[0]
-    : `https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&h=500&fit=crop`;
+  const coverImage =
+    post.images && post.images.length > 0
+      ? post.images[0]
+      : `https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&h=500&fit=crop`;
 
   if (featured) {
     return (
@@ -38,15 +44,23 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReadMore, featured = false 
           </div>
           <div className="p-8 flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-4">
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-                post.type === 'news'
-                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-              }`}>
-                {post.type === 'news' ? <Newspaper className="h-3 w-3" /> : <BookOpen className="h-3 w-3" />}
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                  post.type === "news"
+                    ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                    : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                }`}
+              >
+                {post.type === "news" ? (
+                  <Newspaper className="h-3 w-3" />
+                ) : (
+                  <BookOpen className="h-3 w-3" />
+                )}
                 {post.type}
               </span>
-              <span className="text-slate-500 text-xs font-medium">Featured</span>
+              <span className="text-slate-500 text-xs font-medium">
+                Featured
+              </span>
             </div>
             <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors line-clamp-2">
               {post.title}
@@ -87,12 +101,18 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReadMore, featured = false 
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute top-3 left-3">
-          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-sm ${
-            post.type === 'news'
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-              : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-          }`}>
-            {post.type === 'news' ? <Newspaper className="h-3 w-3" /> : <BookOpen className="h-3 w-3" />}
+          <span
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-sm ${
+              post.type === "news"
+                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+            }`}
+          >
+            {post.type === "news" ? (
+              <Newspaper className="h-3 w-3" />
+            ) : (
+              <BookOpen className="h-3 w-3" />
+            )}
             {post.type}
           </span>
         </div>

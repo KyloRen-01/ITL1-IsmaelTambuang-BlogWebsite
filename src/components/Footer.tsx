@@ -1,5 +1,12 @@
-import React from 'react';
-import { Newspaper, Github, Twitter, Mail, Heart, ArrowUpRight } from 'lucide-react';
+import React from "react";
+import {
+  Newspaper,
+  Facebook,
+  Instagram,
+  Mail,
+  Heart,
+  ArrowUpRight,
+} from "lucide-react";
 
 interface FooterProps {
   onNavigate: (page: string) => void;
@@ -19,21 +26,31 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                 <Newspaper className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">
-                Pulse<span className="text-blue-400">Blog</span>
+              <span className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
+                Un<span className="text-blue-400">Fold</span>
               </span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-6">
-              Your trusted source for thoughtfully crafted articles and the latest news. Stay informed, stay inspired.
+              Ismael Tambuang's personal blog platform, sharing insights,
+              stories, and updates on politics and life.
             </p>
             <div className="flex items-center gap-3">
-              <a href="#" className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
-                <Twitter className="h-4 w-4" />
+              <a
+                href="#"
+                className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+              >
+                <Facebook className="h-4 w-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
-                <Github className="h-4 w-4" />
+              <a
+                href="#"
+                className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+              >
+                <Instagram className="h-4 w-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+              <a
+                href="#"
+                className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+              >
                 <Mail className="h-4 w-4" />
               </a>
             </div>
@@ -41,14 +58,16 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
           {/* Navigation */}
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Navigation</h3>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
+              Navigation
+            </h3>
             <ul className="space-y-3">
               {[
-                { label: 'Home', page: 'home' },
-                { label: 'Articles', page: 'home' },
-                { label: 'News', page: 'home' },
-                { label: 'Dashboard', page: 'dashboard' },
-              ].map(item => (
+                { label: "Home", page: "home" },
+                { label: "Articles", page: "home" },
+                { label: "News", page: "home" },
+                { label: "Dashboard", page: "dashboard" },
+              ].map((item) => (
                 <li key={item.label}>
                   <button
                     onClick={() => onNavigate(item.page)}
@@ -64,35 +83,41 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
           {/* Resources */}
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Resources</h3>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
+              Resources
+            </h3>
             <ul className="space-y-3">
-              {['Documentation', 'API Reference', 'Changelog', 'Support'].map(item => (
-                <li key={item}>
-                  <button
-                    onClick={() => {}}
-                    className="text-slate-400 hover:text-blue-400 text-sm transition-colors flex items-center gap-1 group"
-                  >
-                    {item}
-                    <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                </li>
-              ))}
+              {["Documentation", "API Reference", "Changelog", "Support"].map(
+                (item) => (
+                  <li key={item}>
+                    <button
+                      onClick={() => {}}
+                      className="text-slate-400 hover:text-blue-400 text-sm transition-colors flex items-center gap-1 group"
+                    >
+                      {item}
+                      <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  </li>
+                ),
+              )}
             </ul>
           </div>
 
           {/* Newsletter */}
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Stay Updated</h3>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
+              Stay Updated
+            </h3>
             <p className="text-slate-400 text-sm mb-4">
               Subscribe to our newsletter for the latest updates.
             </p>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const input = e.currentTarget.querySelector('input');
+                const input = e.currentTarget.querySelector("input");
                 if (input) {
-                  alert('Thanks for subscribing!');
-                  input.value = '';
+                  alert("Thanks for subscribing!");
+                  input.value = "";
                 }
               }}
               className="flex gap-2"
@@ -114,15 +139,10 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         </div>
 
         {/* Bottom bar */}
-        <div className="py-6 border-t border-slate-800/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="py-6 border-t border-slate-800/50 flex flex-col sm:flex-row items-center justify-center gap-4">
           <p className="text-slate-500 text-sm">
-            {currentYear} PulseBlog. All rights reserved.
+            {currentYear} UnFold. All rights reserved to Ismael Tambuang.
           </p>
-          <div className="flex items-center gap-6">
-            <button className="text-slate-500 hover:text-slate-300 text-sm transition-colors">Privacy Policy</button>
-            <button className="text-slate-500 hover:text-slate-300 text-sm transition-colors">Terms of Service</button>
-            <button className="text-slate-500 hover:text-slate-300 text-sm transition-colors">Cookies</button>
-          </div>
         </div>
       </div>
     </footer>

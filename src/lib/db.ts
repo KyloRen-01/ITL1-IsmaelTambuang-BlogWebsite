@@ -1,0 +1,220 @@
+import { supabase } from "./supabase";
+import { Post } from "@/types/post";
+
+// Fetch all visible posts
+export async function fetchPosts() {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("is_hidden", false)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data as Post[];
+}
+
+// Fetch single post by ID
+export async function fetchPostById(id: string) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return data as Post;
+}
+
+// Fetch post by slug
+export async function fetchPostBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("slug", slug)
+    .eq("is_hidden", false)
+    .single();
+
+  if (error) throw error;
+  return data as Post;
+}
+
+// Create new post
+export async function createPost(
+  post: Omit<Post, "id" | "created_at" | "updated_at">,
+) {
+  const { data, error } = await supabase
+    .from("posts")
+    .insert([post])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Post;
+}
+
+// Update post
+export async function updatePost(id: string, updates: Partial<Post>) {
+  const { data, error } = await supabase
+    .from("posts")
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Post;
+}
+
+// Delete post
+export async function deletePost(id: string) {
+  const { error } = await supabase.from("posts").delete().eq("id", id);
+
+  if (error) throw error;
+}
+
+// Toggle visibility
+export async function togglePostVisibility(id: string, isHidden: boolean) {
+  return updatePost(id, { is_hidden: isHidden });
+}
+
+// Fetch all posts (including hidden) - for admin dashboard
+export async function fetchAllPosts() {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data as Post[];
+}
+
+// Search posts
+export async function searchPosts(query: string) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("is_hidden", false)
+    .or(
+      `title.ilike.%${query}%,content.ilike.%${query}%,excerpt.ilike.%${query}%`,
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data as Post[];
+}
+
+// User functions
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  created_at: string;
+}
+
+// Create a user record
+export async function createUser(id: string, email: string, name?: string) {
+  const { data, error } = await supabase
+    .from("users")
+    .insert([
+      {
+        id,
+        email,
+        name: name || email.split("@")[0],
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as User;
+}
+
+// Fetch user by ID
+export async function fetchUser(id: string) {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return data as User;
+}
+
+// Delete user account (from database)
+export async function deleteUserAccount(id: string) {
+  const { error } = await supabase
+    .from("users")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+// Delete user authentication (client-side - limited functionality)
+// NOTE: Full auth deletion requires server-side admin API
+export async function deleteCurrentUserAuth() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("No user logged in");
+    
+    // Sign out the user
+    await supabase.auth.signOut();
+    
+    // For complete deletion, see admin deletion method below
+    return { success: true, message: "User signed out. Note: Complete auth deletion requires admin API." };
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Comment functions
+interface Comment {
+  id: string;
+  post_id: string;
+  author_name: string;
+  author_email: string;
+  content: string;
+  created_at: string;
+  is_approved: boolean;
+}
+
+// Fetch comments for a post
+export async function fetchComments(postId: string) {
+  const { data, error } = await supabase
+    .from("comments")
+    .select("*")
+    .eq("post_id", postId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data as Comment[];
+}
+
+// Submit a new comment
+export async function submitComment(
+  postId: string,
+  authorName: string,
+  authorEmail: string,
+  content: string,
+) {
+  const { data, error } = await supabase
+    .from("comments")
+    .insert([
+      {
+        post_id: postId,
+        author_name: authorName,
+        author_email: authorEmail,
+        content,
+        is_approved: false,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Comment;
+}

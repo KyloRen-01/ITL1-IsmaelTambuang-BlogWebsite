@@ -1,12 +1,22 @@
-import React, { useState } from 'react';
-import { Post } from '@/types/post';
-import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React, { useState } from "react";
+import { Post } from "@/types/post";
+import { togglePostVisibility, deletePost } from "@/lib/db";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
-  Eye, EyeOff, Trash2, Edit, Search, Newspaper, BookOpen,
-  Calendar, Clock, Loader2, AlertTriangle, Image as ImageIcon
-} from 'lucide-react';
+  Eye,
+  EyeOff,
+  Trash2,
+  Edit,
+  Search,
+  Newspaper,
+  BookOpen,
+  Calendar,
+  Clock,
+  Loader2,
+  AlertTriangle,
+  Image as ImageIcon,
+} from "lucide-react";
 
 interface PostManagerProps {
   posts: Post[];
@@ -15,32 +25,30 @@ interface PostManagerProps {
   onEdit: (postId: string) => void;
 }
 
-const PostManager: React.FC<PostManagerProps> = ({ posts, loading, onRefresh, onEdit }) => {
-  const [search, setSearch] = useState('');
+const PostManager: React.FC<PostManagerProps> = ({
+  posts,
+  loading,
+  onRefresh,
+  onEdit,
+}) => {
+  const [search, setSearch] = useState("");
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const filteredPosts = posts.filter(p =>
-    p.title.toLowerCase().includes(search.toLowerCase()) ||
-    p.type.includes(search.toLowerCase())
+  const filteredPosts = posts.filter(
+    (p) =>
+      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      p.type.includes(search.toLowerCase()),
   );
 
   const handleToggleVisibility = async (post: Post) => {
     setTogglingId(post.id);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-posts', {
-        body: {
-          action: 'toggle_visibility',
-          id: post.id,
-          is_hidden: !post.is_hidden
-        }
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      await togglePostVisibility(post.id, !post.is_hidden);
       onRefresh();
     } catch (err: any) {
-      console.error('Toggle failed:', err);
+      console.error("Toggle failed:", err);
     } finally {
       setTogglingId(null);
     }
@@ -49,36 +57,29 @@ const PostManager: React.FC<PostManagerProps> = ({ posts, loading, onRefresh, on
   const handleDelete = async (postId: string) => {
     setDeletingId(postId);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-posts', {
-        body: {
-          action: 'delete',
-          id: postId
-        }
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      await deletePost(postId);
       setConfirmDeleteId(null);
       onRefresh();
     } catch (err: any) {
-      console.error('Delete failed:', err);
+      console.error("Delete failed:", err);
     } finally {
       setDeletingId(null);
     }
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
   const stats = {
     total: posts.length,
-    articles: posts.filter(p => p.type === 'article').length,
-    news: posts.filter(p => p.type === 'news').length,
-    hidden: posts.filter(p => p.is_hidden).length,
+    articles: posts.filter((p) => p.type === "article").length,
+    news: posts.filter((p) => p.type === "news").length,
+    hidden: posts.filter((p) => p.is_hidden).length,
   };
 
   return (
@@ -86,15 +87,40 @@ const PostManager: React.FC<PostManagerProps> = ({ posts, loading, onRefresh, on
       {/* Stats cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Posts', value: stats.total, color: 'blue', icon: <BookOpen className="h-5 w-5" /> },
-          { label: 'Articles', value: stats.articles, color: 'cyan', icon: <BookOpen className="h-5 w-5" /> },
-          { label: 'News', value: stats.news, color: 'amber', icon: <Newspaper className="h-5 w-5" /> },
-          { label: 'Hidden', value: stats.hidden, color: 'red', icon: <EyeOff className="h-5 w-5" /> },
+          {
+            label: "Total Posts",
+            value: stats.total,
+            color: "blue",
+            icon: <BookOpen className="h-5 w-5" />,
+          },
+          {
+            label: "Articles",
+            value: stats.articles,
+            color: "cyan",
+            icon: <BookOpen className="h-5 w-5" />,
+          },
+          {
+            label: "News",
+            value: stats.news,
+            color: "amber",
+            icon: <Newspaper className="h-5 w-5" />,
+          },
+          {
+            label: "Hidden",
+            value: stats.hidden,
+            color: "red",
+            icon: <EyeOff className="h-5 w-5" />,
+          },
         ].map((stat) => (
-          <div key={stat.label} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
+          <div
+            key={stat.label}
+            className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5"
+          >
             <div className="flex items-center justify-between mb-3">
               <span className={`text-${stat.color}-400`}>{stat.icon}</span>
-              <span className="text-2xl font-bold text-white">{stat.value}</span>
+              <span className="text-2xl font-bold text-white">
+                {stat.value}
+              </span>
             </div>
             <p className="text-sm text-slate-400">{stat.label}</p>
           </div>
@@ -116,7 +142,10 @@ const PostManager: React.FC<PostManagerProps> = ({ posts, loading, onRefresh, on
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 animate-pulse">
+            <div
+              key={i}
+              className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 animate-pulse"
+            >
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-slate-700 rounded-lg" />
                 <div className="flex-1 space-y-2">
@@ -130,27 +159,35 @@ const PostManager: React.FC<PostManagerProps> = ({ posts, loading, onRefresh, on
       ) : filteredPosts.length === 0 ? (
         <div className="text-center py-16">
           <Search className="h-12 w-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-white mb-2">No posts found</h3>
+          <h3 className="text-lg font-semibold text-white mb-2">
+            No posts found
+          </h3>
           <p className="text-slate-400 text-sm">
-            {search ? 'Try a different search term' : 'Create your first post to get started'}
+            {search
+              ? "Try a different search term"
+              : "Create your first post to get started"}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredPosts.map(post => (
+          {filteredPosts.map((post) => (
             <div
               key={post.id}
               className={`bg-slate-800/50 border rounded-xl p-5 transition-all ${
                 post.is_hidden
-                  ? 'border-red-500/20 opacity-60'
-                  : 'border-slate-700/50 hover:border-slate-600'
+                  ? "border-red-500/20 opacity-60"
+                  : "border-slate-700/50 hover:border-slate-600"
               }`}
             >
               <div className="flex items-start gap-4">
                 {/* Thumbnail */}
                 <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-700 shrink-0 hidden sm:block">
                   {post.images && post.images.length > 0 ? (
-                    <img src={post.images[0]} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={post.images[0]}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <ImageIcon className="h-6 w-6 text-slate-500" />
@@ -161,11 +198,13 @@ const PostManager: React.FC<PostManagerProps> = ({ posts, loading, onRefresh, on
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold uppercase ${
-                      post.type === 'news'
-                        ? 'bg-amber-500/10 text-amber-400'
-                        : 'bg-blue-500/10 text-blue-400'
-                    }`}>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-semibold uppercase ${
+                        post.type === "news"
+                          ? "bg-amber-500/10 text-amber-400"
+                          : "bg-blue-500/10 text-blue-400"
+                      }`}
+                    >
                       {post.type}
                     </span>
                     {post.is_hidden && (
@@ -174,7 +213,9 @@ const PostManager: React.FC<PostManagerProps> = ({ posts, loading, onRefresh, on
                       </span>
                     )}
                   </div>
-                  <h3 className="text-white font-semibold truncate">{post.title}</h3>
+                  <h3 className="text-white font-semibold truncate">
+                    {post.title}
+                  </h3>
                   <div className="flex items-center gap-4 mt-1 text-xs text-slate-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
@@ -201,7 +242,7 @@ const PostManager: React.FC<PostManagerProps> = ({ posts, loading, onRefresh, on
                     onClick={() => handleToggleVisibility(post)}
                     disabled={togglingId === post.id}
                     className="text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg h-9 w-9"
-                    title={post.is_hidden ? 'Show post' : 'Hide post'}
+                    title={post.is_hidden ? "Show post" : "Hide post"}
                   >
                     {togglingId === post.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -229,7 +270,11 @@ const PostManager: React.FC<PostManagerProps> = ({ posts, loading, onRefresh, on
                         disabled={deletingId === post.id}
                         className="text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg text-xs h-9 px-3"
                       >
-                        {deletingId === post.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Confirm'}
+                        {deletingId === post.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          "Confirm"
+                        )}
                       </Button>
                       <Button
                         variant="ghost"

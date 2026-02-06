@@ -1,9 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { Post, PostFilter } from '@/types/post';
-import PostCard from '@/components/PostCard';
-import { Search, SlidersHorizontal, BookOpen, Newspaper, LayoutGrid } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import React, { useState, useMemo } from "react";
+import { Post, PostFilter } from "@/types/post";
+import PostCard from "@/components/PostCard";
+import {
+  Search,
+  SlidersHorizontal,
+  BookOpen,
+  Newspaper,
+  LayoutGrid,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface PostFeedProps {
   posts: Post[];
@@ -12,25 +18,26 @@ interface PostFeedProps {
 }
 
 const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReadMore }) => {
-  const [filter, setFilter] = useState<PostFilter>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+  const [filter, setFilter] = useState<PostFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
 
   const filteredPosts = useMemo(() => {
     let result = [...posts];
 
     // Filter by type
-    if (filter !== 'all') {
-      result = result.filter(p => p.type === filter);
+    if (filter !== "all") {
+      result = result.filter((p) => p.type === filter);
     }
 
     // Filter by search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(p =>
-        p.title.toLowerCase().includes(q) ||
-        p.content.toLowerCase().includes(q) ||
-        p.excerpt.toLowerCase().includes(q)
+      result = result.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.content.toLowerCase().includes(q) ||
+          p.excerpt.toLowerCase().includes(q),
       );
     }
 
@@ -38,16 +45,28 @@ const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReadMore }) => {
     result.sort((a, b) => {
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
-      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+      return sortBy === "newest" ? dateB - dateA : dateA - dateB;
     });
 
     return result;
   }, [posts, filter, searchQuery, sortBy]);
 
-  const filterTabs: { key: PostFilter; label: string; icon: React.ReactNode }[] = [
-    { key: 'all', label: 'All Posts', icon: <LayoutGrid className="h-4 w-4" /> },
-    { key: 'article', label: 'Articles', icon: <BookOpen className="h-4 w-4" /> },
-    { key: 'news', label: 'News', icon: <Newspaper className="h-4 w-4" /> },
+  const filterTabs: {
+    key: PostFilter;
+    label: string;
+    icon: React.ReactNode;
+  }[] = [
+    {
+      key: "all",
+      label: "All Posts",
+      icon: <LayoutGrid className="h-4 w-4" />,
+    },
+    {
+      key: "article",
+      label: "Articles",
+      icon: <BookOpen className="h-4 w-4" />,
+    },
+    { key: "news", label: "News", icon: <Newspaper className="h-4 w-4" /> },
   ];
 
   const SkeletonCard = () => (
@@ -67,23 +86,26 @@ const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReadMore }) => {
     <section id="feed" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       {/* Section header */}
       <div className="text-center mb-12">
-        <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Latest Content</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+          Latest Content
+        </h2>
         <p className="text-slate-400 max-w-2xl mx-auto">
-          Browse our collection of articles and news updates, carefully curated to bring you the most relevant content.
+          Browse our collection of articles and news updates, carefully curated
+          to bring you the most relevant content.
         </p>
       </div>
 
       {/* Filters & Search */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1">
-          {filterTabs.map(tab => (
+          {filterTabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setFilter(tab.key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 filter === tab.key
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                  : "text-slate-400 hover:text-white hover:bg-slate-700/50"
               }`}
             >
               {tab.icon}
@@ -105,9 +127,11 @@ const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReadMore }) => {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setSortBy(s => s === 'newest' ? 'oldest' : 'newest')}
+            onClick={() =>
+              setSortBy((s) => (s === "newest" ? "oldest" : "newest"))
+            }
             className="border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl shrink-0"
-            title={`Sort by ${sortBy === 'newest' ? 'oldest' : 'newest'}`}
+            title={`Sort by ${sortBy === "newest" ? "oldest" : "newest"}`}
           >
             <SlidersHorizontal className="h-4 w-4" />
           </Button>
@@ -121,10 +145,12 @@ const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReadMore }) => {
           {searchQuery && <span> matching "{searchQuery}"</span>}
         </p>
         <button
-          onClick={() => setSortBy(s => s === 'newest' ? 'oldest' : 'newest')}
+          onClick={() =>
+            setSortBy((s) => (s === "newest" ? "oldest" : "newest"))
+          }
           className="text-sm text-slate-500 hover:text-blue-400 transition-colors"
         >
-          Sorted by: {sortBy === 'newest' ? 'Newest first' : 'Oldest first'}
+          Sorted by: {sortBy === "newest" ? "Newest first" : "Oldest first"}
         </button>
       </div>
 
@@ -140,9 +166,13 @@ const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReadMore }) => {
           <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-4">
             <Search className="h-8 w-8 text-slate-600" />
           </div>
-          <h3 className="text-xl font-semibold text-white mb-2">No posts found</h3>
+          <h3 className="text-xl font-semibold text-white mb-2">
+            No posts found
+          </h3>
           <p className="text-slate-400">
-            {searchQuery ? 'Try adjusting your search query' : 'No posts have been published yet'}
+            {searchQuery
+              ? "Try adjusting your search query"
+              : "No posts have been published yet"}
           </p>
         </div>
       ) : (
@@ -152,7 +182,7 @@ const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReadMore }) => {
               key={post.id}
               post={post}
               onReadMore={onReadMore}
-              featured={index === 0 && filter === 'all' && !searchQuery}
+              featured={index === 0 && filter === "all" && !searchQuery}
             />
           ))}
         </div>
