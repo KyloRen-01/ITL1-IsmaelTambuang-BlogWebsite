@@ -121,11 +121,13 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
   };
 
   const formatCommentDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
+    const date = new Date(normalizeDateString(dateStr));
+    return date.toLocaleString("en-US", {
+      timeZone: "Asia/Manila",
       month: "short",
       day: "numeric",
       year: "numeric",
-      hour: "2-digit",
+      hour: "numeric",
       minute: "2-digit",
     });
   };
@@ -344,6 +346,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
           ) : null}
           <hr />
           <div className="flex items-center gap-2 mt-8 text-sm text-slate-400 mb-6">
+            <span className="font-semibold text-xl">Publisher:</span>{" "}
             <User className="h-4 w-4" />
             {publisherName}
           </div>
