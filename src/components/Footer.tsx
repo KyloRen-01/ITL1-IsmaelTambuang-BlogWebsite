@@ -141,7 +141,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         {/* Bottom bar */}
         <div className="py-6 border-t border-slate-800/50 flex flex-col sm:flex-row items-center justify-center gap-4">
           <p className="text-slate-500 text-sm">
-            {currentYear} UnFold. All rights reserved to Ismael Tambuang.
+            {currentYear} ITL1. All rights reserved to Ismael Tambuang.
           </p>
         </div>
       </div>
