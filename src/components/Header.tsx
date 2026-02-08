@@ -63,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({
           {/* Desktop nav */}
           <nav
             className={`hidden md:flex items-center gap-4 justify-center ${
-              user ? "lg:ml-40" : "flex-1 lg:ml-4"
+              user ? "lg:ml-44" : "flex-1 lg:ml-4"
             }`}
           >
             <button
