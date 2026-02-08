@@ -27,7 +27,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <Newspaper className="h-5 w-5 text-white" />
               </div>
               <span className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
-                Un<span className="text-blue-400">Fold</span>
+                ITL<span className="text-blue-400">1</span>
               </span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-6">

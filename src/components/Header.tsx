@@ -55,12 +55,16 @@ const Header: React.FC<HeaderProps> = ({
               <Newspaper className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
-              Un<span className="text-blue-400">Fold</span>
+              ITL<span className="text-blue-400">1</span>
             </span>
           </button>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1 lg:ml-36">
+          <nav
+            className={`hidden md:flex items-center gap-4 justify-center ${
+              user ? "lg:ml-48" : "flex-1 lg:ml-4"
+            }`}
+          >
             <button
               onClick={() => onNavigate("home")}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${

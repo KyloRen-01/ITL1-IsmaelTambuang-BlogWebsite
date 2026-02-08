@@ -146,10 +146,7 @@ export async function fetchUser(id: string) {
 
 // Delete user account (from database)
 export async function deleteUserAccount(id: string) {
-  const { error } = await supabase
-    .from("users")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("users").delete().eq("id", id);
 
   if (error) throw error;
 }
@@ -158,14 +155,20 @@ export async function deleteUserAccount(id: string) {
 // NOTE: Full auth deletion requires server-side admin API
 export async function deleteCurrentUserAuth() {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) throw new Error("No user logged in");
-    
+
     // Sign out the user
     await supabase.auth.signOut();
-    
+
     // For complete deletion, see admin deletion method below
-    return { success: true, message: "User signed out. Note: Complete auth deletion requires admin API." };
+    return {
+      success: true,
+      message:
+        "User signed out. Note: Complete auth deletion requires admin API.",
+    };
   } catch (error) {
     throw error;
   }

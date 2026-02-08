@@ -1,6 +1,6 @@
-import React from 'react';
-import { ArrowRight, Sparkles, TrendingUp, BookOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { ArrowRight, Sparkles, TrendingUp, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface HeroSectionProps {
   totalPosts: number;
@@ -14,12 +14,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({ totalPosts, onExplore }) => {
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950/50 to-slate-900" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-600/10 via-transparent to-transparent" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-indigo-600/10 via-transparent to-transparent" />
-      
+
       {/* Grid pattern overlay */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{
-        backgroundImage: 'linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)',
-        backgroundSize: '60px 60px'
-      }} />
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -28,17 +32,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({ totalPosts, onExplore }) => {
               <Sparkles className="h-4 w-4" />
               Your source for insights & breaking news
             </div>
-            
+
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-6">
-              Stories that{' '}
+              Introduction
+              <br />
               <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                inspire
-              </span>{' '}
-              and inform
+                To
+              </span>{" "}
+              <span className="bg-gradient-to-r from-cyan-400 via-cyan-800 to-blue-700 bg-clip-text text-transparent">
+                Law 1
+              </span>
             </h1>
-            
-            <p className="text-lg text-slate-400 mb-8 max-w-lg leading-relaxed">
-              Discover thoughtfully crafted articles and the latest news, curated to keep you informed and engaged with what matters most.
+
+            <p className="text-lg text-white mb-8 max-w-lg leading-relaxed">
+              This is the official blog site of Ismael Tambuang in compliance to
+              the requirements of the Introduction to Law 1.{" "}
             </p>
 
             <div className="flex flex-wrap gap-4 mb-12">
@@ -66,7 +74,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ totalPosts, onExplore }) => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-white">{totalPosts}+</p>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider">Published</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">
+                    Published
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -75,7 +85,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ totalPosts, onExplore }) => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-white">Daily</p>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider">Updates</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">
+                    Updates
+                  </p>
                 </div>
               </div>
             </div>
@@ -90,7 +102,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ totalPosts, onExplore }) => {
                   <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
                     <BookOpen className="h-4 w-4 text-blue-400" />
                   </div>
-                  <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Article</span>
+                  <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
+                    Article
+                  </span>
                 </div>
                 <div className="h-2 bg-slate-700 rounded-full w-full mb-2" />
                 <div className="h-2 bg-slate-700 rounded-full w-3/4 mb-2" />
@@ -105,7 +119,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ totalPosts, onExplore }) => {
                 />
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 text-xs font-semibold rounded-full">News</span>
+                    <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 text-xs font-semibold rounded-full">
+                      News
+                    </span>
                     <span className="text-slate-500 text-xs">2 min read</span>
                   </div>
                   <div className="h-2 bg-slate-700 rounded-full w-full mb-2" />
@@ -118,7 +134,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ totalPosts, onExplore }) => {
                   <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
                     <TrendingUp className="h-3 w-3 text-emerald-400" />
                   </div>
-                  <span className="text-xs text-emerald-400 font-medium">Trending</span>
+                  <span className="text-xs text-emerald-400 font-medium">
+                    Trending
+                  </span>
                 </div>
                 <div className="h-2 bg-slate-700 rounded-full w-full mb-2" />
                 <div className="h-2 bg-slate-700 rounded-full w-4/5" />
