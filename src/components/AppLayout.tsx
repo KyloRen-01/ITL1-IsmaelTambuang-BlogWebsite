@@ -11,6 +11,7 @@ import PostDetail from "@/components/PostDetail";
 import Dashboard from "@/components/Dashboard";
 import PostEditor from "@/components/PostEditor";
 import AuthModal from "@/components/AuthModal";
+import ProfilePage from "@/components/ProfilePage";
 
 const AppLayout: React.FC = () => {
   // Auth state
@@ -60,7 +61,10 @@ const AppLayout: React.FC = () => {
 
   // Navigation handler
   const handleNavigate = (page: string) => {
-    if ((page === "dashboard" || page === "editor") && !user) {
+    if (
+      (page === "dashboard" || page === "editor" || page === "profile") &&
+      !user
+    ) {
       setAuthModalOpen(true);
       return;
     }
@@ -143,6 +147,10 @@ const AppLayout: React.FC = () => {
       );
     }
 
+    if (currentPage === "profile" && user) {
+      return <ProfilePage user={user} onReadMore={handleReadMore} />;
+    }
+
     if (currentPage === "dashboard") {
       if (!user) {
         return (
@@ -166,6 +174,7 @@ const AppLayout: React.FC = () => {
       }
       return (
         <Dashboard
+          userId={user.id}
           onNewPost={() => {
             setEditPost(null);
             setCurrentPage("editor");
@@ -198,6 +207,7 @@ const AppLayout: React.FC = () => {
       }
       return (
         <PostEditor
+          userId={user.id}
           editPost={editPost}
           onBack={() => handleNavigate("dashboard")}
           onSaved={handlePostSaved}
@@ -214,7 +224,10 @@ const AppLayout: React.FC = () => {
     );
   };
 
-  const showFooter = currentPage === "home" || currentPage === "dashboard";
+  const showFooter =
+    currentPage === "home" ||
+    currentPage === "dashboard" ||
+    currentPage === "profile";
 
   return (
     <div className="min-h-screen bg-slate-900">

@@ -177,13 +177,8 @@ const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReadMore }) => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPosts.map((post, index) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onReadMore={onReadMore}
-              featured={index === 0 && filter === "all" && !searchQuery}
-            />
+          {filteredPosts.map((post) => (
+            <PostCard key={post.id} post={post} onReadMore={onReadMore} />
           ))}
         </div>
       )}

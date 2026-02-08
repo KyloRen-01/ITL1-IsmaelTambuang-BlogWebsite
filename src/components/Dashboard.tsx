@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Post } from "@/types/post";
 import { supabase } from "@/lib/supabase";
-import { fetchAllPosts } from "@/lib/db";
+import { fetchPostsByAuthor } from "@/lib/db";
 import PostManager from "@/components/PostManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,11 +34,16 @@ interface Comment {
 }
 
 interface DashboardProps {
+  userId: string;
   onNewPost: () => void;
   onEditPost: (postId: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNewPost, onEditPost }) => {
+const Dashboard: React.FC<DashboardProps> = ({
+  userId,
+  onNewPost,
+  onEditPost,
+}) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"posts" | "comments">("posts");
@@ -55,14 +60,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNewPost, onEditPost }) => {
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const posts = await fetchAllPosts();
+      const posts = await fetchPostsByAuthor(userId);
       setPosts(posts);
     } catch (err) {
       console.error("Failed to fetch posts:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   const fetchComments = useCallback(async () => {
     setLoadingComments(true);

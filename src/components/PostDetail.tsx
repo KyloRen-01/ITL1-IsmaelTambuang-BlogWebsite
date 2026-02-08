@@ -17,6 +17,7 @@ import {
   Loader2,
   MessageSquare,
   User as UserIcon,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,13 +97,27 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
+  const normalizeDateString = (value: string) => {
+    const iso = value.includes("T") ? value : value.replace(" ", "T");
+    const hasTimezone = /[zZ]|[+-]\d{2}:\d{2}$/.test(iso);
+    return hasTimezone ? iso : `${iso}Z`;
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    const date = new Date(normalizeDateString(dateStr));
+    const datePart = date.toLocaleDateString("en-US", {
+      timeZone: "Asia/Manila",
       weekday: "long",
       month: "long",
       day: "numeric",
       year: "numeric",
     });
+    const timePart = date.toLocaleTimeString("en-US", {
+      timeZone: "Asia/Manila",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${datePart} • ${timePart}`;
   };
 
   const formatCommentDate = (dateStr: string) => {
@@ -133,6 +148,9 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
     post.images && post.images.length > 0
       ? post.images[0]
       : "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&h=600&fit=crop";
+
+  const publisherName =
+    post.users?.name || post.users?.email?.split("@")[0] || "Unknown";
 
   const renderContent = (content: string) => {
     return content.split("\n").map((paragraph, i) => {
@@ -239,22 +257,21 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
-        <div className="absolute top-6 left-6">
-          <Button
-            onClick={onBack}
-            variant="ghost"
-            className="text-white/80 hover:text-white hover:bg-white/10 backdrop-blur-sm bg-black/20 rounded-xl"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </div>
       </div>
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
         <article className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 sm:p-10">
           <div className="flex flex-wrap items-center gap-3 mb-6">
+            <Button
+              onClick={onBack}
+              variant="ghost"
+              size="sm"
+              className="text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1.5" />
+              Back
+            </Button>
             <span
               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${post.type === "news" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"}`}
             >
@@ -267,7 +284,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
             </span>
             <span className="flex items-center gap-1.5 text-sm text-slate-500">
               <Calendar className="h-3.5 w-3.5" />
-              {formatDate(post.created_at)}
+              {formatDateTime(post.created_at)}
             </span>
             <span className="flex items-center gap-1.5 text-sm text-slate-500">
               <Clock className="h-3.5 w-3.5" />
@@ -277,6 +294,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-6 leading-tight">
             {post.title}
           </h1>
+
           <div className="flex items-center gap-3 mb-8 pb-8 border-b border-slate-700/50">
             <Button
               variant="outline"
@@ -306,10 +324,29 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
               Share
             </Button>
           </div>
-          <div className="prose prose-invert max-w-none">
-            {renderContent(post.content)}
-          </div>
 
+          {post.type === "news" && post.news_link && (
+            <div className="mb-6">
+              <a
+                href={post.news_link}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20"
+              >
+                Read the full story
+              </a>
+            </div>
+          )}
+          {post.content?.trim() ? (
+            <div className="prose prose-invert max-w-none">
+              {renderContent(post.content)}
+            </div>
+          ) : null}
+          <hr />
+          <div className="flex items-center gap-2 mt-8 text-sm text-slate-400 mb-6">
+            <User className="h-4 w-4" />
+            {publisherName}
+          </div>
           {/* Image gallery */}
           {post.images && post.images.length > 1 && (
             <div className="mt-10 pt-10 border-t border-slate-700/50">

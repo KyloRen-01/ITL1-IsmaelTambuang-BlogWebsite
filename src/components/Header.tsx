@@ -10,6 +10,7 @@ import {
   Home,
   PenSquare,
   Newspaper,
+  UserCircle,
 } from "lucide-react";
 
 interface HeaderProps {
@@ -62,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({
           {/* Desktop nav */}
           <nav
             className={`hidden md:flex items-center gap-4 justify-center ${
-              user ? "lg:ml-48" : "flex-1 lg:ml-4"
+              user ? "lg:ml-40" : "flex-1 lg:ml-4"
             }`}
           >
             <button
@@ -109,14 +110,17 @@ const Header: React.FC<HeaderProps> = ({
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                <button
+                  onClick={() => onNavigate("profile")}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 hover:border-slate-600/50 transition-all cursor-pointer"
+                >
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
                     {user.email?.[0]?.toUpperCase() || "A"}
                   </div>
                   <span className="text-sm text-slate-300 max-w-[120px] truncate">
                     {user.email}
                   </span>
-                </div>
+                </button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -203,16 +207,32 @@ const Header: React.FC<HeaderProps> = ({
             )}
             <div className="pt-2 border-t border-slate-800">
               {user ? (
-                <button
-                  onClick={() => {
-                    onLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-red-400"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      onNavigate("profile");
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium ${
+                      currentPage === "profile"
+                        ? "text-blue-400 bg-blue-500/10"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    <UserCircle className="h-4 w-4" />
+                    Profile
+                  </button>
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-red-400"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </button>
+                </>
               ) : (
                 <button
                   onClick={() => {

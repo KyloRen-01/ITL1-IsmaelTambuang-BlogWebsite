@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 import { Post } from "@/types/post";
 import { createPost, updatePost } from "@/lib/db";
@@ -19,12 +19,14 @@ import {
 } from "lucide-react";
 
 interface PostEditorProps {
+  userId: string;
   editPost?: Post | null;
   onBack: () => void;
   onSaved: () => void;
 }
 
 const PostEditor: React.FC<PostEditorProps> = ({
+  userId,
   editPost,
   onBack,
   onSaved,
@@ -34,6 +36,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
   const [type, setType] = useState<"article" | "news">(
     editPost?.type || "article",
   );
+  const [newsLink, setNewsLink] = useState(editPost?.news_link || "");
   const [images, setImages] = useState<string[]>(editPost?.images || []);
   const [excerpt, setExcerpt] = useState(editPost?.excerpt || "");
   const [saving, setSaving] = useState(false);
@@ -42,10 +45,19 @@ const PostEditor: React.FC<PostEditorProps> = ({
   const [preview, setPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const readingTime = Math.max(
-    1,
-    Math.ceil(content.split(/\s+/).filter(Boolean).length / 200),
-  );
+  const readingTime =
+    type === "news"
+      ? 1
+      : Math.max(
+          1,
+          Math.ceil(content.split(/\s+/).filter(Boolean).length / 200),
+        );
+
+  useEffect(() => {
+    if (type === "news" && images.length > 1) {
+      setImages([images[0]]);
+    }
+  }, [type, images]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -55,7 +67,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
     setError("");
 
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
+      const selectedFiles = type === "news" ? [files[0]] : Array.from(files);
+      const uploadPromises = selectedFiles.map(async (file) => {
         // For now, convert images to base64 data URLs
         return new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -68,7 +81,9 @@ const PostEditor: React.FC<PostEditorProps> = ({
       });
 
       const urls = await Promise.all(uploadPromises);
-      setImages((prev) => [...prev, ...urls]);
+      setImages((prev) =>
+        type === "news" ? urls.slice(0, 1) : [...prev, ...urls],
+      );
     } catch (err: any) {
       setError("Failed to upload images: " + (err.message || "Unknown error"));
     } finally {
@@ -82,8 +97,22 @@ const PostEditor: React.FC<PostEditorProps> = ({
   };
 
   const handleSave = async () => {
-    if (!title.trim() || !content.trim()) {
-      setError("Title and content are required");
+    const isNews = type === "news";
+    if (!title.trim()) {
+      setError("Title is required");
+      return;
+    }
+    if (isNews) {
+      if (!newsLink.trim()) {
+        setError("News link is required");
+        return;
+      }
+      if (images.length === 0) {
+        setError("Cover photo is required for news");
+        return;
+      }
+    } else if (!content.trim()) {
+      setError("Content is required for articles");
       return;
     }
 
@@ -99,14 +128,17 @@ const PostEditor: React.FC<PostEditorProps> = ({
 
       const postData = {
         title: title.trim(),
-        content: content.trim(),
+        content: isNews ? "" : content.trim(),
+        news_link: isNews ? newsLink.trim() : null,
         type,
-        images,
-        excerpt: excerpt.trim() || content.trim().substring(0, 160),
+        images: isNews ? images.slice(0, 1) : images,
+        excerpt: isNews
+          ? excerpt.trim()
+          : excerpt.trim() || content.trim().substring(0, 160),
         reading_time: readingTime,
         slug,
         is_hidden: false,
-        author_id: null,
+        author_id: userId,
       };
 
       if (editPost) {
@@ -158,7 +190,12 @@ const PostEditor: React.FC<PostEditorProps> = ({
             </Button>
             <Button
               onClick={handleSave}
-              disabled={saving || !title.trim() || !content.trim()}
+              disabled={
+                saving ||
+                !title.trim() ||
+                (type === "article" && !content.trim()) ||
+                (type === "news" && (!newsLink.trim() || images.length === 0))
+              }
               className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
             >
               {saving ? (
@@ -199,64 +236,86 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 <h2 className="text-3xl font-bold text-white mb-6">
                   {title || "Untitled"}
                 </h2>
-                <div className="prose prose-invert max-w-none">
-                  {content.split("\n").map((p, i) => {
-                    if (!p.trim()) return <br key={i} />;
-                    if (p.startsWith("# "))
-                      return (
-                        <h1
-                          key={i}
-                          className="text-2xl font-bold text-white mt-6 mb-3"
-                        >
-                          {p.slice(2)}
-                        </h1>
-                      );
-                    if (p.startsWith("## "))
-                      return (
-                        <h2
-                          key={i}
-                          className="text-xl font-bold text-white mt-4 mb-2"
-                        >
-                          {p.slice(3)}
-                        </h2>
-                      );
-                    if (p.startsWith("> "))
-                      return (
-                        <blockquote
-                          key={i}
-                          className="border-l-4 border-blue-500 pl-4 py-2 my-4 text-slate-300 italic"
-                        >
-                          {p.slice(2)}
-                        </blockquote>
-                      );
-                    return (
-                      <p
-                        key={i}
-                        className="text-slate-300 leading-relaxed mb-3"
-                      >
-                        {p}
-                      </p>
-                    );
-                  })}
-                </div>
-                {images.length > 0 && (
-                  <div className="grid grid-cols-2 gap-3 mt-6">
-                    {images.map((img, i) => (
+                {type === "news" ? (
+                  <div className="space-y-4">
+                    {images[0] && (
                       <img
-                        key={i}
-                        src={img}
+                        src={images[0]}
                         alt=""
-                        className="rounded-lg w-full h-40 object-cover"
+                        className="rounded-lg w-full h-56 object-cover"
                       />
-                    ))}
+                    )}
+                    <a
+                      href={newsLink || "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300"
+                    >
+                      Open source link
+                    </a>
                   </div>
+                ) : (
+                  <>
+                    <div className="prose prose-invert max-w-none">
+                      {content.split("\n").map((p, i) => {
+                        if (!p.trim()) return <br key={i} />;
+                        if (p.startsWith("# "))
+                          return (
+                            <h1
+                              key={i}
+                              className="text-2xl font-bold text-white mt-6 mb-3"
+                            >
+                              {p.slice(2)}
+                            </h1>
+                          );
+                        if (p.startsWith("## "))
+                          return (
+                            <h2
+                              key={i}
+                              className="text-xl font-bold text-white mt-4 mb-2"
+                            >
+                              {p.slice(3)}
+                            </h2>
+                          );
+                        if (p.startsWith("> "))
+                          return (
+                            <blockquote
+                              key={i}
+                              className="border-l-4 border-blue-500 pl-4 py-2 my-4 text-slate-300 italic"
+                            >
+                              {p.slice(2)}
+                            </blockquote>
+                          );
+                        return (
+                          <p
+                            key={i}
+                            className="text-slate-300 leading-relaxed mb-3"
+                          >
+                            {p}
+                          </p>
+                        );
+                      })}
+                    </div>
+                    {images.length > 0 && (
+                      <div className="grid grid-cols-2 gap-3 mt-6">
+                        {images.map((img, i) => (
+                          <img
+                            key={i}
+                            src={img}
+                            alt=""
+                            className="rounded-lg w-full h-40 object-cover"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             ) : (
               <>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-300">
-                    Title
+                    {type === "news" ? "News Title" : "Title"}
                   </label>
                   <Input
                     value={title}
@@ -266,35 +325,53 @@ const PostEditor: React.FC<PostEditorProps> = ({
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">
-                    Excerpt (optional)
-                  </label>
-                  <Input
-                    value={excerpt}
-                    onChange={(e) => setExcerpt(e.target.value)}
-                    placeholder="Brief description for cards and previews..."
-                    className="bg-slate-800/50 border-slate-700/50 text-white rounded-xl placeholder:text-slate-500 focus-visible:ring-blue-500"
-                  />
-                </div>
+                {type === "news" ? (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">
+                        News Link
+                      </label>
+                      <Input
+                        value={newsLink}
+                        onChange={(e) => setNewsLink(e.target.value)}
+                        placeholder="Paste the source URL..."
+                        className="bg-slate-800/50 border-slate-700/50 text-white rounded-xl placeholder:text-slate-500 focus-visible:ring-amber-500"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">
+                        Excerpt (optional)
+                      </label>
+                      <Input
+                        value={excerpt}
+                        onChange={(e) => setExcerpt(e.target.value)}
+                        placeholder="Brief description for cards and previews..."
+                        className="bg-slate-800/50 border-slate-700/50 text-white rounded-xl placeholder:text-slate-500 focus-visible:ring-blue-500"
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-slate-300">
-                      Content
-                    </label>
-                    <span className="text-xs text-slate-500">
-                      {"Supports basic markdown (# ## > - *)"}
-                    </span>
-                  </div>
-                  <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Write your post content here...&#10;&#10;Use markdown for formatting:&#10;# Heading 1&#10;## Heading 2&#10;> Blockquote&#10;- List item"
-                    rows={18}
-                    className="w-full bg-slate-800/50 border border-slate-700/50 text-white rounded-xl px-4 py-3 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y font-mono text-sm leading-relaxed"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-300">
+                          Content
+                        </label>
+                        <span className="text-xs text-slate-500">
+                          {"Supports basic markdown (# ## > - *)"}
+                        </span>
+                      </div>
+                      <textarea
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder="Write your post content here...&#10;&#10;Use markdown for formatting:&#10;# Heading 1&#10;## Heading 2&#10;> Blockquote&#10;- List item"
+                        rows={18}
+                        className="w-full bg-slate-800/50 border border-slate-700/50 text-white rounded-xl px-4 py-3 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y font-mono text-sm leading-relaxed"
+                      />
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -333,43 +410,85 @@ const PostEditor: React.FC<PostEditorProps> = ({
             </div>
 
             {/* Stats */}
+            {type === "article" && (
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
+                <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">
+                  Stats
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Words</span>
+                    <span className="text-white font-medium">
+                      {content.split(/\s+/).filter(Boolean).length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Reading time</span>
+                    <span className="text-white font-medium">
+                      {readingTime} min
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Images</span>
+                    <span className="text-white font-medium">
+                      {images.length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Publish details */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
               <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">
-                Stats
+                Publish Details
               </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Words</span>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Date Created</span>
                   <span className="text-white font-medium">
-                    {content.split(/\s+/).filter(Boolean).length}
+                    {editPost?.created_at
+                      ? new Date(editPost.created_at).toLocaleDateString(
+                          "en-US",
+                          {
+                            timeZone: "Asia/Manila",
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          },
+                        )
+                      : "On publish"}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Reading time</span>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Time Created</span>
                   <span className="text-white font-medium">
-                    {readingTime} min
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Images</span>
-                  <span className="text-white font-medium">
-                    {images.length}
+                    {editPost?.created_at
+                      ? new Date(editPost.created_at).toLocaleTimeString(
+                          "en-US",
+                          {
+                            timeZone: "Asia/Manila",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          },
+                        )
+                      : "On publish"}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Images */}
+            {/* Images / Cover Photo */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
               <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">
-                Images
+                {type === "news" ? "Cover Photo" : "Images"}
               </h3>
 
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                multiple
+                multiple={type !== "news"}
                 onChange={handleImageUpload}
                 className="hidden"
               />
@@ -388,7 +507,11 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 ) : (
                   <>
                     <Upload className="h-5 w-5" />
-                    <span className="text-xs">Click to upload images</span>
+                    <span className="text-xs">
+                      {type === "news"
+                        ? "Click to upload cover photo"
+                        : "Click to upload images"}
+                    </span>
                   </>
                 )}
               </Button>

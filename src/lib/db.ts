@@ -5,7 +5,7 @@ import { Post } from "@/types/post";
 export async function fetchPosts() {
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select("*, users(name, email)")
     .eq("is_hidden", false)
     .order("created_at", { ascending: false });
 
@@ -17,7 +17,7 @@ export async function fetchPosts() {
 export async function fetchPostById(id: string) {
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select("*, users(name, email)")
     .eq("id", id)
     .single();
 
@@ -29,7 +29,7 @@ export async function fetchPostById(id: string) {
 export async function fetchPostBySlug(slug: string) {
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select("*, users(name, email)")
     .eq("slug", slug)
     .eq("is_hidden", false)
     .single();
@@ -84,7 +84,7 @@ export async function togglePostVisibility(id: string, isHidden: boolean) {
 export async function fetchAllPosts() {
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select("*, users(name, email)")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -95,7 +95,7 @@ export async function fetchAllPosts() {
 export async function searchPosts(query: string) {
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select("*, users(name, email)")
     .eq("is_hidden", false)
     .or(
       `title.ilike.%${query}%,content.ilike.%${query}%,excerpt.ilike.%${query}%`,
@@ -111,6 +111,7 @@ interface User {
   id: string;
   email: string;
   name?: string;
+  birthday?: string;
   created_at: string;
 }
 
@@ -149,6 +150,90 @@ export async function deleteUserAccount(id: string) {
   const { error } = await supabase.from("users").delete().eq("id", id);
 
   if (error) throw error;
+}
+
+// Update user profile with safe fallbacks
+export async function updateUserProfile(
+  id: string,
+  updates: { name?: string; birthday?: string | null; email?: string },
+) {
+  const payload: Record<string, any> = {};
+  if (updates.name !== undefined) payload.name = updates.name;
+  if (updates.email !== undefined) payload.email = updates.email;
+  payload.birthday = updates.birthday ?? null;
+
+  // 1) Update by id
+  const { data, error } = await supabase
+    .from("users")
+    .update(payload)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (data) return data as User;
+
+  // 2) If no row exists for this id, try updating by email and align id
+  if (updates.email) {
+    const { data: byEmail, error: emailError } = await supabase
+      .from("users")
+      .update({ ...payload, id })
+      .eq("email", updates.email)
+      .select()
+      .single();
+
+    if (byEmail) return byEmail as User;
+    if (emailError) {
+      const details =
+        typeof emailError === "object" &&
+        emailError !== null &&
+        "message" in emailError
+          ? String((emailError as { message?: string }).message)
+          : emailError === undefined
+            ? "Unknown error"
+            : JSON.stringify(emailError);
+      console.error("Supabase update-by-email error:", emailError);
+      throw new Error(`Supabase update-by-email error: ${details}`);
+    }
+  }
+
+  // 3) Finally insert if nothing exists
+  const { data: inserted, error: insertError } = await supabase
+    .from("users")
+    .insert([{ id, ...payload }])
+    .select()
+    .single();
+
+  if (insertError) {
+    const details =
+      typeof insertError === "object" &&
+      insertError !== null &&
+      "message" in insertError
+        ? String((insertError as { message?: string }).message)
+        : insertError === undefined
+          ? "Unknown error"
+          : JSON.stringify(insertError);
+    console.error("Supabase insert error:", insertError);
+    throw new Error(`Supabase insert error: ${details}`);
+  }
+
+  if (!inserted) {
+    throw new Error(
+      "Profile update returned no data. Check RLS policies for users table.",
+    );
+  }
+  return inserted as User;
+}
+
+// Fetch posts by author ID
+export async function fetchPostsByAuthor(authorId: string) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*, users(name, email)")
+    .eq("author_id", authorId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data as Post[];
 }
 
 // Delete user authentication (client-side - limited functionality)
