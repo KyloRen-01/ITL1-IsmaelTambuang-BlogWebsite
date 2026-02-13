@@ -56,6 +56,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const publisherName =
     post.users?.name || post.users?.email?.split("@")[0] || "Unknown";
+  const publisherAvatar = post.users?.avatar_url || null;
 
   const handleCardClick = () => {
     if (post.type === "news" && post.news_link) {
@@ -121,8 +122,18 @@ const PostCard: React.FC<PostCardProps> = ({
                 Read more <ArrowRight className="h-4 w-4" />
               </span>
             </div>
-            <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
-              <User className="h-3.5 w-3.5" />
+            <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+              <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700/60 overflow-hidden flex items-center justify-center text-slate-300">
+                {publisherAvatar ? (
+                  <img
+                    src={publisherAvatar}
+                    alt={publisherName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="h-3 w-3" />
+                )}
+              </div>
               {publisherName}
             </div>
           </div>
@@ -184,8 +195,18 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
           <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
         </div>
-        <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
-          <User className="h-3 w-3" />
+        <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+          <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700/60 overflow-hidden flex items-center justify-center text-slate-300">
+            {publisherAvatar ? (
+              <img
+                src={publisherAvatar}
+                alt={publisherName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User className="h-3 w-3" />
+            )}
+          </div>
           {publisherName}
         </div>
       </div>

@@ -21,6 +21,7 @@ import {
 interface PostEditorProps {
   userId: string;
   editPost?: Post | null;
+  isAdmin?: boolean;
   onBack: () => void;
   onSaved: () => void;
 }
@@ -28,6 +29,7 @@ interface PostEditorProps {
 const PostEditor: React.FC<PostEditorProps> = ({
   userId,
   editPost,
+  isAdmin = false,
   onBack,
   onSaved,
 }) => {
@@ -43,6 +45,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [preview, setPreview] = useState(false);
+  const [publishAtLocal, setPublishAtLocal] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const readingTime =
@@ -58,6 +61,22 @@ const PostEditor: React.FC<PostEditorProps> = ({
       setImages([images[0]]);
     }
   }, [type, images]);
+
+  const toDateTimeLocal = (date: Date) => {
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+      date.getDate(),
+    )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    if (editPost?.created_at) {
+      setPublishAtLocal(toDateTimeLocal(new Date(editPost.created_at)));
+    } else {
+      setPublishAtLocal(toDateTimeLocal(new Date()));
+    }
+  }, [editPost?.created_at, isAdmin]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -139,14 +158,15 @@ const PostEditor: React.FC<PostEditorProps> = ({
         slug,
         is_hidden: false,
         author_id: userId,
+        ...(isAdmin && publishAtLocal
+          ? { created_at: new Date(publishAtLocal).toISOString() }
+          : {}),
       };
 
       if (editPost) {
         await updatePost(editPost.id, postData);
       } else {
-        await createPost(
-          postData as Omit<Post, "id" | "created_at" | "updated_at">,
-        );
+        await createPost(postData);
       }
 
       onSaved();
@@ -476,6 +496,22 @@ const PostEditor: React.FC<PostEditorProps> = ({
                   </span>
                 </div>
               </div>
+              {isAdmin && (
+                <div className="pt-4 mt-4 border-t border-slate-700/60">
+                  <label className="text-xs uppercase tracking-wider text-slate-400">
+                    Admin publish time
+                  </label>
+                  <Input
+                    type="datetime-local"
+                    value={publishAtLocal}
+                    onChange={(e) => setPublishAtLocal(e.target.value)}
+                    className="mt-2 bg-slate-700/50 border-slate-600 text-white"
+                  />
+                  <p className="text-xs text-slate-500 mt-2">
+                    Admins can override the post timestamp.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Images / Cover Photo */}

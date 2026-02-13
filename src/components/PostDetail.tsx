@@ -153,6 +153,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
 
   const publisherName =
     post.users?.name || post.users?.email?.split("@")[0] || "Unknown";
+  const publisherAvatar = post.users?.avatar_url || null;
 
   const renderContent = (content: string) => {
     return content.split("\n").map((paragraph, i) => {
@@ -345,10 +346,20 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
             </div>
           ) : null}
           <hr />
-          <div className="flex items-center gap-2 mt-8 text-sm text-slate-400 mb-6">
-            <span className="font-semibold text-xl">Publisher:</span>{" "}
-            <User className="h-4 w-4" />
-            {publisherName}
+          <div className="flex items-center gap-3 mt-8 text-sm text-slate-400 mb-6">
+            <span className="font-semibold text-xl">Publisher:</span>
+            <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700/60 overflow-hidden flex items-center justify-center text-slate-300 text-xs">
+              {publisherAvatar ? (
+                <img
+                  src={publisherAvatar}
+                  alt={publisherName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="h-4 w-4" />
+              )}
+            </div>
+            <span className="text-base text-slate-200">{publisherName}</span>
           </div>
           {/* Image gallery */}
           {post.images && post.images.length > 1 && (

@@ -15,6 +15,7 @@ import {
 
 interface HeaderProps {
   user: User | null;
+  userAvatarUrl?: string | null;
   currentPage: string;
   onNavigate: (page: string) => void;
   onAuthClick: () => void;
@@ -23,6 +24,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({
   user,
+  userAvatarUrl,
   currentPage,
   onNavigate,
   onAuthClick,
@@ -114,8 +116,16 @@ const Header: React.FC<HeaderProps> = ({
                   onClick={() => onNavigate("profile")}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 hover:border-slate-600/50 transition-all cursor-pointer"
                 >
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
-                    {user.email?.[0]?.toUpperCase() || "A"}
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
+                    {userAvatarUrl ? (
+                      <img
+                        src={userAvatarUrl}
+                        alt={user.email || "User avatar"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      user.email?.[0]?.toUpperCase() || "A"
+                    )}
                   </div>
                   <span className="text-sm text-slate-300 max-w-[120px] truncate">
                     {user.email}

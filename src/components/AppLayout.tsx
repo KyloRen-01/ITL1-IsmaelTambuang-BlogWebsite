@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { Post } from "@/types/post";
-import { fetchPosts, fetchAllPosts, fetchPostById } from "@/lib/db";
+import { fetchPosts, fetchAllPosts, fetchPostById, fetchUser } from "@/lib/db";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HeroSection from "@/components/HeroSection";
@@ -17,6 +17,9 @@ const AppLayout: React.FC = () => {
   // Auth state
   const [user, setUser] = useState<User | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<Awaited<
+    ReturnType<typeof fetchUser>
+  > | null>(null);
 
   // Navigation state
   const [currentPage, setCurrentPage] = useState<string>("home");
@@ -41,6 +44,17 @@ const AppLayout: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setUserProfile(null);
+      return;
+    }
+
+    fetchUser(user.id)
+      .then((profile) => setUserProfile(profile))
+      .catch(() => setUserProfile(null));
+  }, [user]);
 
   // Fetch public posts
   const fetchPublicPosts = useCallback(async () => {
@@ -209,6 +223,7 @@ const AppLayout: React.FC = () => {
         <PostEditor
           userId={user.id}
           editPost={editPost}
+          isAdmin={Boolean(userProfile?.is_admin)}
           onBack={() => handleNavigate("dashboard")}
           onSaved={handlePostSaved}
         />
@@ -233,6 +248,7 @@ const AppLayout: React.FC = () => {
     <div className="min-h-screen bg-slate-900">
       <Header
         user={user}
+        userAvatarUrl={userProfile?.avatar_url || null}
         currentPage={currentPage}
         onNavigate={handleNavigate}
         onAuthClick={() => setAuthModalOpen(true)}

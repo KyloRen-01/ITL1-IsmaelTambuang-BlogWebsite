@@ -12,6 +12,7 @@ export interface Post {
   users?: {
     name?: string | null;
     email?: string | null;
+    avatar_url?: string | null;
   } | null;
   slug: string;
   reading_time: number;

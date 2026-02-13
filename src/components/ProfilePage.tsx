@@ -1,9 +1,16 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { User } from "@supabase/supabase-js";
 import { Post } from "@/types/post";
-import { fetchUser, updateUserProfile, fetchPostsByAuthor } from "@/lib/db";
+import {
+  fetchUser,
+  updateUserProfile,
+  fetchPostsByAuthor,
+  fetchUserByEmail,
+  updateUserAdminByEmail,
+} from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   User as UserIcon,
   Mail,
@@ -30,6 +37,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
   const [birthday, setBirthday] = useState("");
   const [age, setAge] = useState<number | null>(null);
   const [memberSince, setMemberSince] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -40,6 +52,17 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
   const [editBirthday, setEditBirthday] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminLookupLoading, setAdminLookupLoading] = useState(false);
+  const [adminTarget, setAdminTarget] = useState<{
+    email: string;
+    name?: string;
+    is_admin?: boolean;
+  } | null>(null);
+  const [adminUpdating, setAdminUpdating] = useState(false);
+  const [adminError, setAdminError] = useState("");
+  const [adminSuccess, setAdminSuccess] = useState("");
 
   const calculateAge = (birthdayStr: string): number | null => {
     if (!birthdayStr) return null;
@@ -59,6 +82,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
       setName(profile.name || user.email?.split("@")[0] || "");
       setBirthday(profile.birthday || "");
       setAge(calculateAge(profile.birthday || ""));
+      setAvatarUrl(profile.avatar_url || null);
+      setIsAdmin(Boolean(profile.is_admin));
       setMemberSince(
         new Date(profile.created_at).toLocaleDateString("en-US", {
           month: "long",
@@ -71,6 +96,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
       setName(user.email?.split("@")[0] || "");
       setBirthday("");
       setAge(null);
+      setAvatarUrl(null);
+      setIsAdmin(false);
       setMemberSince(
         user.created_at
           ? new Date(user.created_at).toLocaleDateString("en-US", {
@@ -140,6 +167,136 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
     }
   };
 
+  const readFileAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleAvatarSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setAvatarError("");
+    setAdminSuccess("");
+
+    const maxSizeMb = 2;
+    if (file.size > maxSizeMb * 1024 * 1024) {
+      setAvatarError(`Image must be ${maxSizeMb}MB or less.`);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      await updateUserProfile(user.id, {
+        avatar_url: dataUrl,
+        email: user.email || undefined,
+      });
+      setAvatarUrl(dataUrl);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+            ? err
+            : (err as { message?: string })?.message ||
+              "Failed to update avatar. Please try again.";
+      setAvatarError(message);
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarError("");
+    setUploadingAvatar(true);
+    try {
+      await updateUserProfile(user.id, {
+        avatar_url: null,
+        email: user.email || undefined,
+      });
+      setAvatarUrl(null);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+            ? err
+            : (err as { message?: string })?.message ||
+              "Failed to remove avatar. Please try again.";
+      setAvatarError(message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleAdminLookup = async () => {
+    const email = adminEmail.trim().toLowerCase();
+    if (!email) {
+      setAdminError("Enter an email to look up.");
+      return;
+    }
+    setAdminError("");
+    setAdminSuccess("");
+    setAdminLookupLoading(true);
+    try {
+      const found = await fetchUserByEmail(email);
+      setAdminTarget({
+        email: found.email,
+        name: found.name,
+        is_admin: found.is_admin,
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+            ? err
+            : (err as { message?: string })?.message ||
+              "Failed to find that user.";
+      setAdminError(message);
+      setAdminTarget(null);
+    } finally {
+      setAdminLookupLoading(false);
+    }
+  };
+
+  const handleAdminToggle = async (nextValue: boolean) => {
+    if (!adminTarget) return;
+    setAdminError("");
+    setAdminSuccess("");
+    setAdminUpdating(true);
+    try {
+      const updated = await updateUserAdminByEmail(
+        adminTarget.email,
+        nextValue,
+      );
+      setAdminTarget({
+        email: updated.email,
+        name: updated.name,
+        is_admin: updated.is_admin,
+      });
+      setAdminSuccess("Admin access updated.");
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+            ? err
+            : (err as { message?: string })?.message ||
+              "Failed to update admin access.";
+      setAdminError(message);
+    } finally {
+      setAdminUpdating(false);
+    }
+  };
+
   const normalizeDateString = (value: string) => {
     const iso = value.includes("T") ? value : value.replace(" ", "T");
     const hasTimezone = /[zZ]|[+-]\d{2}:\d{2}$/.test(iso);
@@ -183,10 +340,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
           {/* Avatar + Info */}
           <div className="px-6 sm:px-10 pb-8 -mt-14 relative">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-8">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-3xl font-bold border-4 border-slate-800 shadow-xl">
-                {name?.[0]?.toUpperCase() ||
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-3xl font-bold border-4 border-slate-800 shadow-xl overflow-hidden">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={name || "Profile photo"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  name?.[0]?.toUpperCase() ||
                   user.email?.[0]?.toUpperCase() ||
-                  "A"}
+                  "A"
+                )}
               </div>
               <div className="flex-1 min-w-0 pb-1">
                 {!editing ? (
@@ -194,6 +359,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
                     <h1 className="text-2xl sm:text-3xl font-bold text-white truncate">
                       {name}
                     </h1>
+                    {isAdmin && (
+                      <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        Admin
+                      </span>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -235,6 +405,40 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
                   </div>
                 )}
                 <p className="text-slate-400 text-sm mt-1">{user.email}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarSelect}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg"
+                  >
+                    {uploadingAvatar ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    {avatarUrl ? "Change photo" : "Upload photo"}
+                  </Button>
+                  {avatarUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveAvatar}
+                      disabled={uploadingAvatar}
+                      className="text-slate-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg"
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -336,6 +540,79 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
             {saveError && (
               <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-lg text-sm">
                 {saveError}
+              </div>
+            )}
+
+            {avatarError && (
+              <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-lg text-sm">
+                {avatarError}
+              </div>
+            )}
+
+            {isAdmin && (
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">
+                      Admin Permissions
+                    </h3>
+                    <p className="text-slate-400 text-sm">
+                      Toggle admin access for a user by email.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Input
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    placeholder="client@email.com"
+                    className="bg-slate-700/50 border-slate-600 text-white"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAdminLookup}
+                    disabled={adminLookupLoading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                  >
+                    {adminLookupLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    Find User
+                  </Button>
+                </div>
+
+                {adminError && (
+                  <div className="mt-4 bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-lg text-sm">
+                    {adminError}
+                  </div>
+                )}
+
+                {adminSuccess && (
+                  <div className="mt-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-lg text-sm">
+                    {adminSuccess}
+                  </div>
+                )}
+
+                {adminTarget && (
+                  <div className="mt-5 flex items-center justify-between gap-4 bg-slate-900/40 border border-slate-700/60 rounded-xl p-4">
+                    <div className="min-w-0">
+                      <p className="text-white font-medium truncate">
+                        {adminTarget.name || adminTarget.email}
+                      </p>
+                      <p className="text-slate-400 text-sm truncate">
+                        {adminTarget.email}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-400">Admin</span>
+                      <Switch
+                        checked={Boolean(adminTarget.is_admin)}
+                        onCheckedChange={handleAdminToggle}
+                        disabled={adminUpdating}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
