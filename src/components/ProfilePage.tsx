@@ -78,19 +78,37 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
   const loadProfile = useCallback(async () => {
     setLoadingProfile(true);
     try {
-      const profile = await fetchUser(user.id);
-      setName(profile.name || user.email?.split("@")[0] || "");
-      setBirthday(profile.birthday || "");
-      setAge(calculateAge(profile.birthday || ""));
-      setAvatarUrl(profile.avatar_url || null);
-      setIsAdmin(Boolean(profile.is_admin));
-      setMemberSince(
-        new Date(profile.created_at).toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        }),
-      );
+      let profile = null as Awaited<ReturnType<typeof fetchUser>> | null;
+
+      try {
+        profile = await fetchUser(user.id);
+      } catch (err) {
+        if (user.email) {
+          try {
+            profile = await fetchUserByEmail(user.email);
+          } catch (emailErr) {
+            profile = null;
+          }
+        }
+      }
+
+      if (profile) {
+        setName(profile.name || user.email?.split("@")[0] || "");
+        setBirthday(profile.birthday || "");
+        setAge(calculateAge(profile.birthday || ""));
+        setAvatarUrl(profile.avatar_url || null);
+        setIsAdmin(Boolean(profile.is_admin));
+        setMemberSince(
+          new Date(profile.created_at).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          }),
+        );
+        return;
+      }
+
+      throw new Error("Profile not found");
     } catch {
       // If user record doesn't exist yet, use auth info
       setName(user.email?.split("@")[0] || "");
@@ -112,17 +130,35 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
     }
   }, [user]);
 
+  const resolveAuthorId = useCallback(async () => {
+    let authorId = user.id;
+    try {
+      await fetchUser(user.id);
+    } catch (err) {
+      if (user.email) {
+        try {
+          const existing = await fetchUserByEmail(user.email);
+          authorId = existing.id;
+        } catch (fetchErr) {
+          // Keep auth id as fallback if no public profile exists yet.
+        }
+      }
+    }
+    return authorId;
+  }, [user]);
+
   const loadPosts = useCallback(async () => {
     setLoadingPosts(true);
     try {
-      const data = await fetchPostsByAuthor(user.id);
+      const authorId = await resolveAuthorId();
+      const data = await fetchPostsByAuthor(authorId);
       setPosts(data);
     } catch (err) {
       console.error("Failed to fetch user posts:", err);
     } finally {
       setLoadingPosts(false);
     }
-  }, [user.id]);
+  }, [resolveAuthorId]);
 
   useEffect(() => {
     loadProfile();
@@ -183,7 +219,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
     setAvatarError("");
     setAdminSuccess("");
 
-    const maxSizeMb = 2;
+    const maxSizeMb = 10;
     if (file.size > maxSizeMb * 1024 * 1024) {
       setAvatarError(`Image must be ${maxSizeMb}MB or less.`);
       if (avatarInputRef.current) avatarInputRef.current.value = "";

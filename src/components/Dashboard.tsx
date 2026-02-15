@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Post } from "@/types/post";
 import { supabase } from "@/lib/supabase";
-import { fetchPostsByAuthor } from "@/lib/db";
+import {
+  createUser,
+  fetchPostsByAuthor,
+  fetchUser,
+  fetchUserByEmail,
+} from "@/lib/db";
 import PostManager from "@/components/PostManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,17 +62,47 @@ const Dashboard: React.FC<DashboardProps> = ({
   >("all");
   const [actioningId, setActioningId] = useState<string | null>(null);
 
+  const resolveAuthorId = useCallback(async () => {
+    let authorId = userId;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    try {
+      await fetchUser(userId);
+    } catch (err) {
+      if (user?.email) {
+        try {
+          const existing = await fetchUserByEmail(user.email);
+          authorId = existing.id;
+        } catch (fetchErr) {
+          const created = await createUser(
+            userId,
+            user.email,
+            typeof user.user_metadata?.name === "string"
+              ? user.user_metadata.name
+              : undefined,
+          );
+          authorId = created.id;
+        }
+      }
+    }
+
+    return authorId;
+  }, [userId]);
+
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const posts = await fetchPostsByAuthor(userId);
+      const authorId = await resolveAuthorId();
+      const posts = await fetchPostsByAuthor(authorId);
       setPosts(posts);
     } catch (err) {
       console.error("Failed to fetch posts:", err);
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [resolveAuthorId]);
 
   const fetchComments = useCallback(async () => {
     setLoadingComments(true);

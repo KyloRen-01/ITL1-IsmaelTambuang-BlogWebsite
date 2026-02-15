@@ -135,7 +135,28 @@ export async function createUser(id: string, email: string, name?: string) {
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    const message =
+      typeof error === "object" &&
+      error !== null &&
+      "message" in error &&
+      typeof (error as { message?: string }).message === "string"
+        ? (error as { message: string }).message
+        : "";
+
+    if (message.includes("users_email_key")) {
+      const { data: existing, error: fetchError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .single();
+
+      if (fetchError) throw fetchError;
+      return existing as User;
+    }
+
+    throw error;
+  }
   return data as User;
 }
 
@@ -196,27 +217,48 @@ export async function updateUserProfile(
 
   if (data) return data as User;
 
-  // 2) If no row exists for this id, try updating by email and align id
+  // 2) If no row exists for this id, try updating by email (do not change id)
   if (updates.email) {
-    const { data: byEmail, error: emailError } = await supabase
+    const { data: existingByEmail, error: lookupError } = await supabase
       .from("users")
-      .update({ ...payload, id })
+      .select("*")
       .eq("email", updates.email)
-      .select()
-      .single();
+      .maybeSingle();
 
-    if (byEmail) return byEmail as User;
-    if (emailError) {
+    if (lookupError) {
       const details =
-        typeof emailError === "object" &&
-        emailError !== null &&
-        "message" in emailError
-          ? String((emailError as { message?: string }).message)
-          : emailError === undefined
+        typeof lookupError === "object" &&
+        lookupError !== null &&
+        "message" in lookupError
+          ? String((lookupError as { message?: string }).message)
+          : lookupError === undefined
             ? "Unknown error"
-            : JSON.stringify(emailError);
-      console.error("Supabase update-by-email error:", emailError);
-      throw new Error(`Supabase update-by-email error: ${details}`);
+            : JSON.stringify(lookupError);
+      console.error("Supabase lookup-by-email error:", lookupError);
+      throw new Error(`Supabase lookup-by-email error: ${details}`);
+    }
+
+    if (existingByEmail) {
+      const { data: byEmail, error: emailError } = await supabase
+        .from("users")
+        .update(payload)
+        .eq("email", updates.email)
+        .select()
+        .single();
+
+      if (byEmail) return byEmail as User;
+      if (emailError) {
+        const details =
+          typeof emailError === "object" &&
+          emailError !== null &&
+          "message" in emailError
+            ? String((emailError as { message?: string }).message)
+            : emailError === undefined
+              ? "Unknown error"
+              : JSON.stringify(emailError);
+        console.error("Supabase update-by-email error:", emailError);
+        throw new Error(`Supabase update-by-email error: ${details}`);
+      }
     }
   }
 

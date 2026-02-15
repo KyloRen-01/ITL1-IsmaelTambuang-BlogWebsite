@@ -2,7 +2,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { Post } from "@/types/post";
-import { fetchPosts, fetchAllPosts, fetchPostById, fetchUser } from "@/lib/db";
+import {
+  createUser,
+  fetchPosts,
+  fetchAllPosts,
+  fetchPostById,
+  fetchUser,
+} from "@/lib/db";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HeroSection from "@/components/HeroSection";
@@ -51,9 +57,35 @@ const AppLayout: React.FC = () => {
       return;
     }
 
-    fetchUser(user.id)
-      .then((profile) => setUserProfile(profile))
-      .catch(() => setUserProfile(null));
+    const ensureUserProfile = async () => {
+      try {
+        const profile = await fetchUser(user.id);
+        setUserProfile(profile);
+        return;
+      } catch (err) {
+        // If the user record does not exist, create it so post inserts pass FK.
+      }
+
+      if (!user.email) {
+        setUserProfile(null);
+        return;
+      }
+
+      try {
+        const created = await createUser(
+          user.id,
+          user.email,
+          typeof user.user_metadata?.name === "string"
+            ? user.user_metadata.name
+            : undefined,
+        );
+        setUserProfile(created);
+      } catch (err) {
+        setUserProfile(null);
+      }
+    };
+
+    ensureUserProfile();
   }, [user]);
 
   // Fetch public posts
