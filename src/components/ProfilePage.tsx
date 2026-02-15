@@ -533,14 +533,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onReadMore }) => {
                       : "—"}
                 </p>
               </div>
-
-              <div className="bg-slate-700/30 border border-slate-700/50 rounded-xl p-4">
-                <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-wider mb-2">
-                  <Calendar className="h-3.5 w-3.5" />
-                  Member Since
-                </div>
-                <p className="text-white text-sm font-medium">{memberSince}</p>
-              </div>
             </div>
 
             {/* Editing save bar */}
