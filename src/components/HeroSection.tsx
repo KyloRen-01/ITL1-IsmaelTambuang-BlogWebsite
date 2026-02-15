@@ -26,8 +26,41 @@ const HeroSection: React.FC<HeroSectionProps> = ({ totalPosts, onExplore }) => {
       />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left side – Avatar & About Me */}
+          <div className="flex flex-col items-center text-center">
+            <div className="relative mb-8">
+              <div className="w-44 h-44 sm:w-52 sm:h-52 lg:w-56 lg:h-56 rounded-full overflow-hidden ring-4 ring-blue-500/30 shadow-2xl shadow-blue-600/20 bg-slate-800/80">
+                <img
+                  src="/Ismael-avatar.png"
+                  alt="Ismael M. Tambuang"
+                  className="w-full h-full object-contain object-bottom scale-110"
+                />
+              </div>
+              {/* Decorative glow */}
+              <div className="absolute -inset-2 rounded-full bg-gradient-to-tr from-blue-500/20 to-cyan-500/20 blur-xl -z-10" />
+            </div>
+
+            <h2 className="text-2xl font-bold text-white mb-3">About Me</h2>
+            <p className="text-base text-slate-300 leading-relaxed max-w-md mb-4">
+              I am Ismael M. Tambuang, a third-year AB Political Science student
+              at Ateneo de Davao University. I currently serve as the External
+              Vice-President of SALAM: The Ateneo Muslim Society and as the
+              Sectoral Representative of the Muslim Community in Ateneo.
+            </p>
+            <p className="text-sm text-slate-400 leading-relaxed max-w-md">
+              For inquiries, collaborations, or concerns, you may reach me at{" "}
+              <a
+                href="mailto:imtambuang@addu.edu.ph"
+                className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
+              >
+                imtambuang@addu.edu.ph
+              </a>
+            </p>
+          </div>
+
+          {/* Right side – Title, CTA, Stats */}
+          <div className="text-left">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-8">
               <Sparkles className="h-4 w-4" />
               Your source for insights & breaking news
@@ -89,57 +122,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ totalPosts, onExplore }) => {
                     Updates
                   </p>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Hero visual */}
-          <div className="hidden lg:block relative">
-            <div className="relative">
-              {/* Floating cards */}
-              <div className="absolute -top-4 -left-4 w-72 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-xl p-5 shadow-2xl transform rotate-[-3deg] hover:rotate-0 transition-transform duration-500">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <BookOpen className="h-4 w-4 text-blue-400" />
-                  </div>
-                  <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
-                    Article
-                  </span>
-                </div>
-                <div className="h-2 bg-slate-700 rounded-full w-full mb-2" />
-                <div className="h-2 bg-slate-700 rounded-full w-3/4 mb-2" />
-                <div className="h-2 bg-slate-700 rounded-full w-1/2" />
-              </div>
-
-              <div className="ml-20 mt-20 w-80 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden shadow-2xl transform rotate-[2deg] hover:rotate-0 transition-transform duration-500">
-                <img
-                  src="https://images.unsplash.com/photo-1504711434969-e33886168d5c?w=600&h=300&fit=crop"
-                  alt="Featured"
-                  className="w-full h-40 object-cover"
-                />
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 text-xs font-semibold rounded-full">
-                      News
-                    </span>
-                    <span className="text-slate-500 text-xs">2 min read</span>
-                  </div>
-                  <div className="h-2 bg-slate-700 rounded-full w-full mb-2" />
-                  <div className="h-2 bg-slate-700 rounded-full w-2/3" />
-                </div>
-              </div>
-
-              <div className="absolute bottom-0 -right-4 w-64 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-xl p-5 shadow-2xl transform rotate-[4deg] hover:rotate-0 transition-transform duration-500">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                    <TrendingUp className="h-3 w-3 text-emerald-400" />
-                  </div>
-                  <span className="text-xs text-emerald-400 font-medium">
-                    Trending
-                  </span>
-                </div>
-                <div className="h-2 bg-slate-700 rounded-full w-full mb-2" />
-                <div className="h-2 bg-slate-700 rounded-full w-4/5" />
               </div>
             </div>
           </div>
